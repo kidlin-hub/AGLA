@@ -1,25 +1,36 @@
-def gaussian_elimination(coefficients, constants):
-    num_equations = len(constants)
+def solve_linear_system(mat, vec):
+    size = len(vec)
+    aug = [row + [vec[i]] for i, row in enumerate(mat)]
     
-    for pivot_index in range(num_equations):
-        # Forward Elimination
-        for row in range(pivot_index + 1, num_equations):
-            factor = coefficients[row][pivot_index] // coefficients[pivot_index][pivot_index]
-            for col in range(pivot_index, num_equations):
-                coefficients[row][col] -= factor * coefficients[pivot_index][col]
-            constants[row] -= factor * constants[pivot_index]
+    for i in range(size):
+        # Pivoting
+        max_idx = max(range(i, size), key=lambda r: abs(aug[r][i]))
+        if i != max_idx:
+            aug[i], aug[max_idx] = aug[max_idx], aug[i]
+        
+        pivot = aug[i][i]
+        if pivot == 0:
+            raise ValueError("Singular matrix detected.")
+        
+        # Normalize
+        for j in range(i, size + 1):
+            aug[i][j] /= pivot
+        
+        # Eliminate
+        for k in range(i + 1, size):
+            factor = aug[k][i]
+            for j in range(i, size + 1):
+                aug[k][j] -= factor * aug[i][j]
     
     # Back-substitution
-    solutions = [0] * num_equations
-    for row in range(num_equations - 1, -1, -1):
-        solutions[row] = constants[row] // coefficients[row][row]
-        for upper_row in range(row - 1, -1, -1):
-            constants[upper_row] -= coefficients[upper_row][row] * solutions[row]
+    solution = [0] * size
+    for i in range(size - 1, -1, -1):
+        solution[i] = aug[i][size] - sum(aug[i][j] * solution[j] for j in range(i + 1, size))
     
-    return solutions
+    return solution
 
 # Example usage
-coefficients = [[2, 1], [1, 1]]
-constants = [4, 2]
-solution = gaussian_elimination(coefficients, constants)
-print("Solution:", solution)
+mat = [[2, 1], [1, 1]]
+vec = [4, 2]
+sol = solve_linear_system(mat, vec)
+print("Solution:", sol)
