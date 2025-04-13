@@ -1,1 +1,59 @@
+def mat_trans(M):
+    return [[M[i][j] for i in range(len(M))] for j in range(len(M[0]))]
 
+def rref(M):
+    m = [row[:] for row in M]
+    r, c, pivots = 0, 0, []
+    rows, cols = len(m), len(m[0])
+    while r < rows and c < cols:
+        i_max = None
+        for i in range(r, rows):
+            if abs(m[i][c]) > 1e-10:
+                i_max = i
+                break
+        if i_max is None:
+            c += 1
+            continue
+        m[r], m[i_max] = m[i_max], m[r]
+        piv = m[r][c]
+        m[r] = [v / piv for v in m[r]]
+        for i in range(rows):
+            if i != r and abs(m[i][c]) > 1e-10:
+                factor = m[i][c]
+                m[i] = [m[i][j] - factor*m[r][j] for j in range(cols)]
+        pivots.append(c)
+        r += 1
+        c += 1
+    return m, pivots
+
+def basis_row_space(M):
+    rrefM, _ = rref(M)
+    return [row for row in rrefM if any(abs(x) > 1e-10 for x in row)]
+
+def basis_column_space(M, orig):
+    _, pivots = rref(M)
+    return [[orig[i][j] for i in range(len(orig))] for j in pivots]
+
+def null_space(M):
+    rrefM, pivots = rref(M)
+    rows, cols = len(rrefM), len(rrefM[0])
+    free = [j for j in range(cols) if j not in pivots]
+    basis = []
+    for f in free:
+        v = [0]*cols
+        v[f] = 1
+        for i, j in enumerate(pivots):
+            v[j] = -rrefM[i][f]
+        basis.append(v)
+    return basis
+
+n = int(input())
+orig = [list(map(float, input().split())) for _ in range(n)]
+rs = basis_row_space(orig)
+cs = basis_column_space(orig, orig)
+cn = null_space(orig)
+rn = null_space(mat_trans(orig))
+print("Row space:", rs)
+print("Column space:", cs)
+print("Row null space:", rn)
+print("Column null space:", cn)
