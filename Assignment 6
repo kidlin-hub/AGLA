@@ -1,0 +1,97 @@
+import sympy
+import math
+
+def rref(M):
+    A = [row[:] for row in M]
+    m, n = len(A), len(A[0])
+    r = c = 0
+    pivots = []
+    while r < m and c < n:
+        p = None
+        for i in range(r, m):
+            if abs(A[i][c]) > 1e-12:
+                p = i
+                break
+        if p is None:
+            c += 1
+            continue
+        A[r], A[p] = A[p], A[r]
+        fac = A[r][c]
+        A[r] = [val / fac for val in A[r]]
+        for i in range(m):
+            if i != r and abs(A[i][c]) > 1e-12:
+                f = A[i][c]
+                A[i] = [A[i][j] - f * A[r][j] for j in range(n)]
+        pivots.append(c)
+        r += 1
+        c += 1
+    return A, pivots
+
+def null_space(M):
+    R, piv = rref(M)
+    m, n = len(R), len(R[0])
+    free = [j for j in range(n) if j not in piv]
+    basis = []
+    if not free:
+        # all variables are pivot ones; pick the trivial 0-vector if no free variable exists.
+        return [[0]*n]
+    for f in free:
+        vec = [0]*n
+        vec[f] = 1
+        for i, col in enumerate(piv):
+            vec[col] = -R[i][f]
+        basis.append(vec)
+    return basis
+
+def subtract_identity(A, lam):
+    n = len(A)
+    return [[A[i][j] - (lam if i==j else 0) for j in range(n)] for i in range(n)]
+
+def compute_charpoly_coeffs(A):
+    a, b, c = A[0]
+    d, e, f = A[1]
+    g, h, i = A[2]
+    tr = a + e + i
+    sum2 = a*e + a*i + e*i - b*d - c*g - f*h
+    det = a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h - e*g)
+    return (1, -tr, sum2, -det)
+
+n = 3
+A = [list(map(float, input().split())) for _ in range(n)]
+# Compute characteristic polynomial coefficients for lambda^3 - tr*lambda^2 + sum2*lambda - det = 0
+coeffs = compute_charpoly_coeffs(A)
+lam = sympy.symbols('lam')
+poly = coeffs[0]*lam**3 + coeffs[1]*lam**2 + coeffs[2]*lam + coeffs[3]
+eigs = sympy.solve(poly, lam)
+
+def convert(e):
+    # return a numerical complex value if needed
+    r = complex(sympy.N(e))
+    # if imaginary part is near zero, return float
+    if abs(r.imag) < 1e-10:
+        return r.real
+    return r
+
+eigs = [convert(val) for val in eigs]
+
+print("Eigenvalues:")
+for val in eigs:
+    print(val)
+
+print("Eigenvectors:")
+for lam_val in eigs:
+    B = subtract_identity(A, lam_val)
+    ns = null_space(B)
+    # choose the first non-zero vector from the nullspace basis
+    vec = None
+    for v in ns:
+        if any(abs(x) > 1e-12 for x in v):
+            vec = v
+            break
+    if vec is None:
+        vec = [0]*3
+    # Normalize eigenvector for display (if possible)
+    norm = math.sqrt(sum((abs(x)**2 for x in vec)))
+    if norm > 1e-12:
+        vec = [x/norm for x in vec]
+    print(vec)
