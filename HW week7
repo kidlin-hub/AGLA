@@ -1,0 +1,37 @@
+import math
+
+def dot(u, v):
+    return sum(a*b for a, b in zip(u, v))
+
+def proj(u, v):
+    d = dot(v, u)
+    n = dot(u, u)
+    return [d/n * x for x in u] if n else [0]*len(u)
+
+def gs(vs):
+    ortho = []
+    for v in vs:
+        w = v[:]
+        for u in ortho:
+            p = proj(u, w)
+            w = [x - y for x, y in zip(w, p)]
+        ortho.append(w)
+    return ortho
+
+def norm(v):
+    return math.sqrt(dot(v, v))
+
+def unit(v):
+    n = norm(v)
+    return [x/n for x in v] if n else v
+
+k = int(input())
+vs = [list(map(float, input().split())) for _ in range(k)]
+ortho = gs(vs)
+unit_set = [unit(v) for v in ortho]
+print("Orthogonal set:")
+for v in ortho:
+    print(v)
+print("Orthonormal set:")
+for v in unit_set:
+    print(v)
