@@ -1,0 +1,60 @@
+def t(M):
+    return [[M[r][c] for r in range(len(M))] for c in range(len(M[0]))]
+
+def rref(M):
+    A = [row[:] for row in M]
+    m, n = len(A), len(A[0])
+    r = c = 0
+    pivots = []
+    while r < m and c < n:
+        p = None
+        for i in range(r, m):
+            if abs(A[i][c]) > 1e-12:
+                p = i
+                break
+        if p is None:
+            c += 1
+            continue
+        A[r], A[p] = A[p], A[r]
+        fac = A[r][c]
+        A[r] = [v / fac for v in A[r]]
+        for i in range(m):
+            if i != r and abs(A[i][c]) > 1e-12:
+                f = A[i][c]
+                A[i] = [A[i][j] - f*A[r][j] for j in range(n)]
+        pivots.append(c)
+        r += 1
+        c += 1
+    return A, pivots
+
+def basis_row(M):
+    R, _ = rref(M)
+    return [r for r in R if any(abs(x) > 1e-12 for x in r)]
+
+def basis_col(M, orig):
+    _, piv = rref(M)
+    return [[orig[i][j] for i in range(len(orig))] for j in piv]
+
+def null_space(M):
+    R, piv = rref(M)
+    m, n = len(R), len(R[0])
+    free = [j for j in range(n) if j not in piv]
+    basis = []
+    for f in free:
+        vec = [0]*n
+        vec[f] = 1
+        for i, j in enumerate(piv):
+            vec[j] = -R[i][f]
+        basis.append(vec)
+    return basis
+
+n = int(input())
+A = [list(map(float, input().split())) for _ in range(n)]
+rs = basis_row(A)
+cs = basis_col(A, A)
+cn = null_space(A)
+rn = null_space(t(A))
+print("Row space:", rs)
+print("Column space:", cs)
+print("Row null space:", rn)
+print("Column null space:", cn)
